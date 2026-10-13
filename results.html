@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Ergebnisse – Hebammen-Bewertung</title>
+<style>
+  :root { --bg:#faf6f2; --card:#fff; --ink:#2d2926; --muted:#6f6761; --accent:#c0654a; --line:#e6ddd5; --err:#b3261e; --star:#e8a33d; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:17px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  main { max-width:680px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:1.7rem; margin:8px 0 16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px; margin-bottom:16px; }
+  .card h2 { font-size:1.1rem; margin:0 0 10px; }
+  input[type=password] { width:100%; padding:12px; font:inherit; border:1px solid var(--line); border-radius:10px; }
+  button { padding:12px 18px; font:inherit; font-weight:700; color:#fff; background:var(--accent); border:0; border-radius:10px; cursor:pointer; margin-top:10px; }
+  .err { color:var(--err); margin-top:10px; }
+  .bar { height:12px; background:#efe7e0; border-radius:6px; overflow:hidden; margin-top:6px; }
+  .bar > span { display:block; height:100%; background:var(--star); }
+  .row { margin-bottom:16px; }
+  .row b { font-size:1.3rem; }
+  .row small { color:var(--muted); }
+  .comment { border-left:4px solid var(--line); padding:4px 0 4px 12px; margin:0 0 14px; white-space:pre-wrap; }
+  .muted { color:var(--muted); }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Ergebnisse</h1>
+
+  <div class="card" id="login">
+    <label for="pw"><b>Passwort</b></label>
+    <input type="password" id="pw" autocomplete="current-password">
+    <button id="go">Ergebnisse anzeigen</button>
+    <div class="err" id="err"></div>
+  </div>
+
+  <div id="out" class="hidden"></div>
+</main>
+
+<script>
+  // ====== HIER EINTRAGEN (gleiche Werte wie in index.html) ======
+  const SUPABASE_URL = 'https://blthjqjcmvuwnccpphsh.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJsdGhqcWpjbXZ1d25jY3BwaHNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE5MTcyNzksImV4cCI6MjEwNzQ5MzI3OX0.77MB_HVa89Ij4Du5mr-Ea9e0bQh-kWcjy6xF5gm9dzQ';
+  // ==============================================================
+
+  const $ = (id) => document.getElementById(id);
+  const LABELS = { erreichbarkeit: 'Erreichbarkeit', fachwissen: 'Fachwissen', termine: 'Terminvereinbarungen' };
+
+  async function load() {
+    $('err').textContent = '';
+    $('go').disabled = true;
+    try {
+      const res = await fetch(SUPABASE_URL + '/rest/v1/rpc/get_results', {
+        method: 'POST',
+        headers: Object.assign(
+          { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY },
+          SUPABASE_ANON_KEY.startsWith('sb_') ? {} : { Authorization: 'Bearer ' + SUPABASE_ANON_KEY }
+        ),
+        body: JSON.stringify({ p_password: $('pw').value })
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const r = await res.json();
+
+      if (r.status === 'unauthorized') { $('err').textContent = 'Falsches Passwort.'; return; }
+      if (r.status === 'not_enough') {
+        $('err').textContent = '';
+        $('login').classList.add('hidden');
+        const out = $('out'); out.classList.remove('hidden');
+        out.innerHTML = '<div class="card"><p class="muted"></p></div>';
+        out.querySelector('p').textContent =
+          'Bisher gibt es ' + r.count + ' Bewertung(en). Zum Schutz der Anonymität werden die Ergebnisse erst ab ' + r.min + ' Bewertungen angezeigt.';
+        return;
+      }
+
+      $('login').classList.add('hidden');
+      const out = $('out'); out.classList.remove('hidden'); out.innerHTML = '';
+
+      const stats = document.createElement('div'); stats.className = 'card';
+      const h = document.createElement('h2'); h.textContent = 'Durchschnitt aus ' + r.count + ' Bewertungen'; stats.appendChild(h);
+      Object.keys(LABELS).forEach((k) => {
+        const row = document.createElement('div'); row.className = 'row';
+        const v = Number(r[k]);
+        row.innerHTML = '<div><b></b> <small>von 5 Sternen</small></div><div class="bar"><span></span></div>';
+        row.querySelector('b').textContent = LABELS[k] + ': ' + v.toFixed(1).replace('.', ',');
+        row.querySelector('span').style.width = (v / 5 * 100) + '%';
+        stats.appendChild(row);
+      });
+      out.appendChild(stats);
+
+      const c = document.createElement('div'); c.className = 'card';
+      const ch = document.createElement('h2'); ch.textContent = 'Lob und Kritik'; c.appendChild(ch);
+      if (!r.kommentare.length) {
+        const p = document.createElement('p'); p.className = 'muted'; p.textContent = 'Keine Kommentare vorhanden.'; c.appendChild(p);
+      } else {
+        r.kommentare.forEach((t) => { const d = document.createElement('div'); d.className = 'comment'; d.textContent = t; c.appendChild(d); });
+      }
+      out.appendChild(c);
+    } catch (e) {
+      $('err').textContent = 'Die Ergebnisse konnten nicht geladen werden.';
+    } finally { $('go').disabled = false; }
+  }
+
+  $('go').addEventListener('click', load);
+  $('pw').addEventListener('keydown', (e) => { if (e.key === 'Enter') load(); });
+</script>
+</body>
+</html>
