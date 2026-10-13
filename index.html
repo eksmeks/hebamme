@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hebammen-Bewertungen</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .rating-form { background: #f9f9f9; padding: 20px; border-radius: 8px; }
+        button { background: #4CAF50; color: white; border: none; padding: 10px 15px; cursor: pointer; }
+        button:hover { background: #45a049; }
+    </style>
+</head>
+<body>
+    <h1>Bewerte deine Hebamme</h1>
+    <p>Hier kannst du anonym deine Hebamme bewerten.</p>
+
+    <div class="rating-form">
+        <h2>Bewertung abgeben</h2>
+        <form id="ratingForm">
+            <label>Dein vollständiger Name (nur zur Verifizierung):</label>
+            <input type="text" id="name" required>
+
+            <label>Wie zufrieden bist du?</label>
+            <select id="rating" required>
+                <option value="">-- Bitte wählen --</option>
+                <option value="5">⭐⭐⭐⭐⭐ Sehr gut</option>
+                <option value="4">⭐⭐⭐⭐ Gut</option>
+                <option value="3">⭐⭐⭐ Befriedigend</option>
+                <option value="2">⭐⭐ Schlecht</option>
+                <option value="1">⭐ Sehr schlecht</option>
+            </select>
+
+            <label>Erfahrungsbericht (optional):</label>
+            <textarea id="comment" rows="4"></textarea>
+
+            <button type="submit">Bewertung absenden</button>
+        </form>
+    </div>
+
+    <div id="successMessage" style="display: none; margin-top: 20px; padding: 10px; background: #dff0d8; color: #3c763d;">
+        Vielen Dank für deine Bewertung! Sie wird nach Prüfung veröffentlicht.
+    </div>
+
+    <script>
+        document.getElementById("ratingForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById("name").value;
+            const rating = document.getElementById("rating").value;
+            const comment = document.getElementById("comment").value;
+
+            // Hier sendest du die Daten an dein Backend (siehe nächster Schritt)
+            const response = await fetch("https://dein-backend-service.de/api/ratings", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, rating, comment }),
+            });
+
+            if (response.ok) {
+                document.getElementById("ratingForm").style.display = "none";
+                document.getElementById("successMessage").style.display = "block";
+            } else {
+                alert("Fehler beim Absenden. Bitte versuche es später noch einmal.");
+            }
+        });
+    </script>
+</body>
+</html>
