@@ -5,15 +5,34 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>Impressum</title>
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('theme'); } catch (e) {}
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
 <style>
-  body { font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color:#2d2926; background:#faf6f2; margin:0; }
-  main { max-width: 720px; margin: 0 auto; padding: 24px 16px 64px; }
-  .todo { background:#fff3cd; border:1px solid #e6c65c; padding:10px 14px; border-radius:8px; }
+  :root { color-scheme:light; --bg:#faf6f2; --card:#fff; --ink:#2d2926; --line:#e6ddd5; --link:#a2503a; }
+  :root[data-theme="dark"] { color-scheme:dark; --bg:#1a1715; --card:#26211e; --ink:#f1ebe6; --line:#433b35; --link:#e8a98f; }
+  body { font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color:var(--ink); background:var(--bg); margin:0; }
+  main { max-width: 720px; margin: 0 auto; padding: 16px 16px 64px; }
+  a { color: var(--link); }
+  .topbar { display:flex; justify-content:space-between; align-items:center; }
+  .theme-toggle { border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:999px; padding:6px 14px; font:inherit; font-size:.9rem; cursor:pointer; }
+  .theme-toggle:focus-visible { outline:3px solid var(--link); outline-offset:2px; }
+  .todo { color:#2d2926; background:#fff3cd; border:1px solid #e6c65c; padding:10px 14px; border-radius:8px; }
 </style>
 </head>
 <body>
 <main>
-  <p><a href="index.html">← Zurück</a></p>
+  <div class="topbar">
+    <a href="index.html">← Zurück</a>
+    <button type="button" class="theme-toggle" id="themeBtn" aria-label="Zwischen hellem und dunklem Design wechseln"></button>
+  </div>
   <h1>Impressum</h1>
   <p class="todo"><b>Platzhalter – bitte ausfüllen.</b> Ersetze die Angaben in [eckigen Klammern] und lösche diesen Kasten.</p>
   <p>
@@ -24,5 +43,19 @@
   <p>E-Mail: [E-Mail-Adresse]<br>Telefon: [Telefonnummer, optional]</p>
   <p>Berufsbezeichnung: Hebamme (verliehen in [Land]); zuständige Aufsichtsbehörde: [Behörde]. [Bitte nach Bedarf ergänzen, z. B. Berufsordnung.]</p>
 </main>
+<script>
+  (function () {
+    var b = document.getElementById('themeBtn');
+    function isDark() { return document.documentElement.getAttribute('data-theme') === 'dark'; }
+    function label() { b.textContent = isDark() ? '☀ Hell' : '☾ Dunkel'; }
+    label();
+    b.addEventListener('click', function () {
+      var next = isDark() ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem('theme', next); } catch (e) {}
+      label();
+    });
+  })();
+</script>
 </body>
 </html>
