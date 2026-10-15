@@ -5,15 +5,38 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Anonyme Hebammen-Bewertung</title>
+<script>
+  // Design vor dem ersten Zeichnen setzen (gespeicherte Wahl oder Geräteeinstellung)
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('theme'); } catch (e) {}
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
 <style>
   :root {
+    color-scheme: light;
     --bg: #faf6f2; --card: #ffffff; --ink: #2d2926; --muted: #6f6761;
-    --accent: #c0654a; --accent-dark: #a2503a; --star: #e8a33d; --line: #e6ddd5; --err: #b3261e; --ok: #2e7d4f;
+    --accent: #c0654a; --accent-dark: #a2503a; --star: #e8a33d; --star-off: #c9c0b8;
+    --line: #e6ddd5; --err: #b3261e; --err-bg: #fdeceb; --ok: #2e7d4f; --field: #ffffff; --link: #a2503a;
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #1a1715; --card: #26211e; --ink: #f1ebe6; --muted: #b0a69e;
+    --accent: #c9694c; --accent-dark: #de7c5f; --star: #f0b04a; --star-off: #5f564f;
+    --line: #433b35; --err: #ff8f87; --err-bg: #3a1f1d; --ok: #6fcf97; --field: #14110f; --link: #e8a98f;
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--ink);
          font: 17px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 680px; margin: 0 auto; padding: 24px 16px 64px; }
+  main { max-width: 680px; margin: 0 auto; padding: 16px 16px 64px; }
+  a { color: var(--link); }
+  .topbar { display: flex; justify-content: flex-end; margin-bottom: 4px; }
+  .theme-toggle { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px;
+                  padding: 6px 14px; font: inherit; font-size: .9rem; cursor: pointer; }
   h1 { font-size: 1.7rem; margin: 8px 0 4px; }
   .lead { color: var(--muted); margin: 0 0 24px; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; margin-bottom: 16px; }
@@ -21,21 +44,23 @@
   .card p { margin: 0 0 14px; color: var(--muted); font-size: .95rem; }
   label { font-weight: 600; display: block; margin-bottom: 6px; }
   input[type=text], textarea {
-    width: 100%; padding: 12px; font: inherit; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink);
+    width: 100%; padding: 12px; font: inherit; border: 1px solid var(--line); border-radius: 10px; background: var(--field); color: var(--ink);
   }
   input[type=text] { letter-spacing: .12em; text-transform: uppercase; font-size: 1.1rem; }
   textarea { min-height: 140px; resize: vertical; }
   .hint { font-size: .88rem; color: var(--muted); margin-top: 6px; }
   .rating { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   .rating button {
-    border: 1px solid var(--line); background: #fff; border-radius: 10px; cursor: pointer;
-    min-width: 46px; height: 46px; font-size: 1.5rem; line-height: 1; color: #c9c0b8; padding: 0 8px;
+    border: 1px solid var(--line); background: var(--field); border-radius: 10px; cursor: pointer;
+    min-width: 46px; height: 46px; font-size: 1.5rem; line-height: 1; color: var(--star-off); padding: 0 8px;
   }
   .rating button.zero { font-size: 1rem; color: var(--muted); }
   .rating button.on { color: var(--star); border-color: var(--star); }
   .rating button.zero.on { color: #fff; background: var(--muted); border-color: var(--muted); }
-  .rating button:focus-visible, button.submit:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .rating button:focus-visible, button.submit:focus-visible, .theme-toggle:focus-visible, input[type=checkbox]:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   .scale { display: flex; justify-content: space-between; font-size: .8rem; color: var(--muted); margin-top: 6px; max-width: 340px; }
+  label.check { display: flex; gap: 12px; align-items: flex-start; font-weight: 400; font-size: .95rem; margin: 0; cursor: pointer; }
+  label.check input { width: 22px; height: 22px; flex: none; margin-top: 2px; accent-color: var(--accent); }
   button.submit {
     width: 100%; padding: 14px; font: inherit; font-weight: 700; color: #fff; background: var(--accent);
     border: 0; border-radius: 12px; cursor: pointer; margin-top: 8px;
@@ -43,7 +68,7 @@
   button.submit:hover { background: var(--accent-dark); }
   button.submit:disabled { opacity: .6; cursor: default; }
   .msg { padding: 12px 14px; border-radius: 10px; margin-top: 14px; display: none; }
-  .msg.err { display: block; background: #fdeceb; color: var(--err); }
+  .msg.err { display: block; background: var(--err-bg); color: var(--err); }
   .done { text-align: center; padding: 32px 20px; }
   .done h2 { color: var(--ok); }
   footer { margin-top: 32px; font-size: .88rem; color: var(--muted); text-align: center; }
@@ -53,6 +78,8 @@
 </head>
 <body>
 <main>
+  <div class="topbar"><button type="button" class="theme-toggle" id="themeBtn" aria-label="Zwischen hellem und dunklem Design wechseln"></button></div>
+
   <div id="formView">
     <h1>Bewertung deiner Hebamme</h1>
     <p class="lead">Deine Bewertung ist anonym. Dein Einmal-Code wird beim Absenden entwertet und nicht mit deiner Bewertung gespeichert. Es werden keine Namen erfasst.</p>
@@ -73,6 +100,13 @@
         <div class="hint"><span id="count">0</span> / 2000 Zeichen</div>
       </div>
 
+      <div class="card">
+        <label class="check" for="consent">
+          <input type="checkbox" id="consent">
+          <span>Ich habe die <a href="datenschutz.html" target="_blank" rel="noopener">Datenschutzerklärung</a> gelesen und willige in die Verarbeitung meiner Angaben ein. Mir ist bewusst, dass meine Bewertung anonym gespeichert wird und nach dem Absenden nicht mehr geändert, widerrufen oder gelöscht werden kann.</span>
+        </label>
+      </div>
+
       <button type="submit" class="submit" id="submitBtn">Bewertung absenden</button>
       <div class="msg" id="msg" role="alert"></div>
     </form>
@@ -90,8 +124,8 @@
 
 <script>
   // ====== HIER EINTRAGEN (siehe ANLEITUNG.md) ======
-  const SUPABASE_URL = 'https://blthjqjcmvuwnccpphsh.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJsdGhqcWpjbXZ1d25jY3BwaHNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE5MTcyNzksImV4cCI6MjEwNzQ5MzI3OX0.77MB_HVa89Ij4Du5mr-Ea9e0bQh-kWcjy6xF5gm9dzQ';
+  const SUPABASE_URL = 'https://DEIN-PROJEKT.supabase.co';
+  const SUPABASE_ANON_KEY = 'DEIN-ANON-PUBLIC-KEY';
   // =================================================
 
   const QUESTIONS = [
@@ -105,6 +139,20 @@
 
   const ratings = {};
   const $ = (id) => document.getElementById(id);
+
+  // Hell/Dunkel-Schalter
+  (function () {
+    const b = $('themeBtn');
+    const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
+    const label = () => { b.textContent = isDark() ? '☀ Hell' : '☾ Dunkel'; };
+    label();
+    b.addEventListener('click', () => {
+      const next = isDark() ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem('theme', next); } catch (e) {}
+      label();
+    });
+  })();
 
   // Fragen aufbauen
   QUESTIONS.forEach((q) => {
@@ -154,6 +202,7 @@
     for (const q of QUESTIONS) {
       if (ratings[q.key] === undefined) return showError('Bitte bewerte „' + q.title + '“ mit 0 bis 5 Sternen.');
     }
+    if (!$('consent').checked) return showError('Bitte bestätige die Einwilligung, bevor du absendest.');
 
     const btn = $('submitBtn');
     btn.disabled = true; btn.textContent = 'Wird gesendet …';
