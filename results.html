@@ -5,18 +5,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Ergebnisse – Hebammen-Bewertung</title>
+<script>
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem('theme'); } catch (e) {}
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
 <style>
-  :root { --bg:#faf6f2; --card:#fff; --ink:#2d2926; --muted:#6f6761; --accent:#c0654a; --line:#e6ddd5; --err:#b3261e; --star:#e8a33d; }
+  :root { color-scheme:light; --bg:#faf6f2; --card:#fff; --ink:#2d2926; --muted:#6f6761; --accent:#c0654a; --line:#e6ddd5; --err:#b3261e; --star:#e8a33d; --field:#fff; --bar:#efe7e0; }
+  :root[data-theme="dark"] { color-scheme:dark; --bg:#1a1715; --card:#26211e; --ink:#f1ebe6; --muted:#b0a69e; --accent:#c9694c; --line:#433b35; --err:#ff8f87; --star:#f0b04a; --field:#14110f; --bar:#3d3631; }
   * { box-sizing: border-box; }
   body { margin:0; background:var(--bg); color:var(--ink); font:17px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
-  main { max-width:680px; margin:0 auto; padding:24px 16px 64px; }
+  main { max-width:680px; margin:0 auto; padding:16px 16px 64px; }
+  .topbar { display:flex; justify-content:flex-end; margin-bottom:4px; }
+  .theme-toggle { border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:999px; padding:6px 14px; font:inherit; font-size:.9rem; cursor:pointer; margin:0; }
   h1 { font-size:1.7rem; margin:8px 0 16px; }
   .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px; margin-bottom:16px; }
   .card h2 { font-size:1.1rem; margin:0 0 10px; }
-  input[type=password] { width:100%; padding:12px; font:inherit; border:1px solid var(--line); border-radius:10px; }
-  button { padding:12px 18px; font:inherit; font-weight:700; color:#fff; background:var(--accent); border:0; border-radius:10px; cursor:pointer; margin-top:10px; }
+  input[type=password] { width:100%; padding:12px; font:inherit; border:1px solid var(--line); border-radius:10px; background:var(--field); color:var(--ink); }
+  button.go { padding:12px 18px; font:inherit; font-weight:700; color:#fff; background:var(--accent); border:0; border-radius:10px; cursor:pointer; margin-top:10px; }
+  button:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
   .err { color:var(--err); margin-top:10px; }
-  .bar { height:12px; background:#efe7e0; border-radius:6px; overflow:hidden; margin-top:6px; }
+  .bar { height:12px; background:var(--bar); border-radius:6px; overflow:hidden; margin-top:6px; }
   .bar > span { display:block; height:100%; background:var(--star); }
   .row { margin-bottom:16px; }
   .row b { font-size:1.3rem; }
@@ -28,12 +42,13 @@
 </head>
 <body>
 <main>
+  <div class="topbar"><button type="button" class="theme-toggle" id="themeBtn" aria-label="Zwischen hellem und dunklem Design wechseln"></button></div>
   <h1>Ergebnisse</h1>
 
   <div class="card" id="login">
     <label for="pw"><b>Passwort</b></label>
     <input type="password" id="pw" autocomplete="current-password">
-    <button id="go">Ergebnisse anzeigen</button>
+    <button class="go" id="go">Ergebnisse anzeigen</button>
     <div class="err" id="err"></div>
   </div>
 
@@ -42,12 +57,26 @@
 
 <script>
   // ====== HIER EINTRAGEN (gleiche Werte wie in index.html) ======
-  const SUPABASE_URL = 'https://blthjqjcmvuwnccpphsh.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJsdGhqcWpjbXZ1d25jY3BwaHNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE5MTcyNzksImV4cCI6MjEwNzQ5MzI3OX0.77MB_HVa89Ij4Du5mr-Ea9e0bQh-kWcjy6xF5gm9dzQ';
+  const SUPABASE_URL = 'https://DEIN-PROJEKT.supabase.co';
+  const SUPABASE_ANON_KEY = 'DEIN-ANON-PUBLIC-KEY';
   // ==============================================================
 
   const $ = (id) => document.getElementById(id);
   const LABELS = { erreichbarkeit: 'Erreichbarkeit', fachwissen: 'Fachwissen', termine: 'Terminvereinbarungen' };
+
+  // Hell/Dunkel-Schalter
+  (function () {
+    const b = $('themeBtn');
+    const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
+    const label = () => { b.textContent = isDark() ? '☀ Hell' : '☾ Dunkel'; };
+    label();
+    b.addEventListener('click', () => {
+      const next = isDark() ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem('theme', next); } catch (e) {}
+      label();
+    });
+  })();
 
   async function load() {
     $('err').textContent = '';
